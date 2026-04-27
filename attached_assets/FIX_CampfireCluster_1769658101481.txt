@@ -1,0 +1,42 @@
+// FIX FOR: EnhancedCampfireCluster.tsx Line 198
+// ERROR: Attempting to run JS driven animation with useNativeDriver: true
+
+// PROBLEM: The glow animation is likely animating opacity or scale in a way that conflicts with native driver
+
+// SOLUTION 1: Change useNativeDriver to false for the glow animation
+// Find line 198 in EnhancedCampfireCluster.tsx and change:
+
+// FROM:
+glow.start();  // Line 198 - this is calling an animation defined earlier
+
+// Look for where 'glow' animation is defined (around lines 190-197)
+// It probably looks like this:
+const glow = Animated.timing(glowAnim, {
+  toValue: 1,
+  duration: 1000,
+  useNativeDriver: true,  // ❌ THIS IS THE PROBLEM
+});
+
+// CHANGE TO:
+const glow = Animated.timing(glowAnim, {
+  toValue: 1,
+  duration: 1000,
+  useNativeDriver: false,  // ✅ FIXED
+});
+
+// OR SOLUTION 2: If the glow is animating opacity/transform, keep useNativeDriver: true
+// but make sure you're ONLY animating opacity or transform properties in the style
+
+// Example of what the style should look like:
+<Animated.View style={{
+  opacity: glowAnim,  // ✅ OK with useNativeDriver: true
+  transform: [{ scale: glowAnim }],  // ✅ OK with useNativeDriver: true
+  // NOT these:
+  // backgroundColor: ...,  // ❌ Not supported
+  // width: ...,  // ❌ Not supported
+  // height: ...,  // ❌ Not supported
+}}>
+
+// RECOMMENDED FIX:
+// In EnhancedCampfireCluster.tsx around lines 190-200, find the animation setup
+// and change useNativeDriver: true to useNativeDriver: false

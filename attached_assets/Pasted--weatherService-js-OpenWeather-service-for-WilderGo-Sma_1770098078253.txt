@@ -1,0 +1,234 @@
+// weatherService.js
+// OpenWeather service for WilderGo Smart Route
+
+import axios from 'axios';
+
+const OPENWEATHER_API_KEY = 'YOUR_API_KEY_HERE'; // ← REPLACE THIS!
+const BASE_URL = 'https://api.openweathermap.org/data/2.5';
+
+/**
+ * Get current weather for a location
+ */
+export const getCurrentWeather = async (latitude, longitude) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/weather`, {
+      params: {
+        lat: latitude,
+        lon: longitude,
+        appid: OPENWEATHER_API_KEY,
+        units: 'imperial' // Fahrenheit (use 'metric' for Celsius)
+      }
+    });
+    
+    return {
+      success: true,
+      temperature: Math.round(response.data.main.temp),
+      feelsLike: Math.round(response.data.main.feels_like),
+      condition: response.data.weather[0].main, // "Clear", "Clouds", "Rain", etc.
+      description: response.data.weather[0].description, // "clear sky", etc.
+      icon: response.data.weather[0].icon, // Icon code
+      humidity: response.data.main.humidity,
+      windSpeed: Math.round(response.data.wind.speed),
+      windDirection: response.data.wind.deg,
+      visibility: response.data.visibility,
+      cloudCover: response.data.clouds.all,
+      sunrise: new Date(response.data.sys.sunrise * 1000),
+      sunset: new Date(response.data.sys.sunset * 1000)
+    };
+  } catch (error) {
+    console.error('Error getting current weather:', error);
+    return { 
+      success: false, 
+      error: error.message 
+    };
+  }
+};
+
+/**
+ * Get 5-day weather forecast (3-hour intervals)
+ */
+export const getForecast = async (latitude, longitude) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/forecast`, {
+      params: {
+        lat: latitude,
+        lon: longitude,
+        appid: OPENWEATHER_API_KEY,
+        units: 'imperial'
+      }
+    });
+    
+    // Group by day
+    const dailyForecasts = [];
+    const days = {};
+    
+    response.data.list.forEach(item => {
+      const date = new Date(item.dt * 1000).toLocaleDateString();
+      if (!days[date]) {
+        days[date] = [];
+      }
+      days[date].push(item);
+    });
+    
+    // Get one forecast per day (noon-ish)
+    Object.keys(days).forEach(date => {
+      const dayData = days[date];
+      const noonIndex = Math.floor(dayData.length / 2);
+      const forecast = dayData[noonIndex];
+      
+      dailyForecasts.push({
+        date: date,
+        temperature: Math.round(forecast.main.temp),
+        condition: forecast.weather[0].main,
+        description: forecast.weather[0].description,
+        icon: forecast.weather[0].icon,
+        humidity: forecast.main.humidity,
+        windSpeed: Math.round(forecast.wind.speed),
+        rain: forecast.rain ? forecast.rain['3h'] : 0
+      });
+    });
+    
+    return {
+      success: true,
+      forecasts: dailyForecasts.slice(0, 5) // Return 5 days
+    };
+  } catch (error) {
+    console.error('Error getting forecast:', error);
+    return { 
+      success: false, 
+      error: error.message 
+    };
+  }
+};
+
+/**
+ * Get weather alerts for a location
+ */
+export const getWeatherAlerts = async (latitude, longitude) => {
+  try {
+    // Note: Alerts require One Call API (different endpoint)
+    // Using basic weather for now, can upgrade later
+    const weather = await getCurrentWeather(latitude, longitude);
+    
+    if (!weather.success) return weather;
+    
+    // Check for severe conditions
+    const alerts = [];
+    
+    if (weather.condition === 'Thunderstorm') {
+      alerts.push({
+        type: 'warning',
+        title: 'Thunderstorm Warning',
+        description: 'Thunderstorms in the area. Exercise caution.'
+      });
+    }
+    
+    if (weather.condition === 'Snow') {
+      alerts.push({
+        type: 'advisory',
+        title: 'Snow Advisory',
+        description: 'Snowy conditions. Roads may be slippery.'
+      });
+    }
+    
+    if (weather.windSpeed > 25) {
+      alerts.push({
+        type: 'advisory',
+        title: 'High Wind Advisory',
+        description: `Wind speeds reaching ${weather.windSpeed} mph.`
+      });
+    }
+    
+    return {
+      success: true,
+      alerts: alerts,
+      currentWeather: weather
+    };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Get weather along a route
+ * Takes an array of coordinates and returns weather for start, middle, end
+ */
+export const getRouteWeather = async (routeCoordinates) => {
+  try {
+    if (!routeCoordinates || routeCoordinates.length < 2) {
+      return { success: false, error: 'Invalid route coordinates' };
+    }
+    
+    const startPoint = routeCoordinates[0];
+    const middlePoint = routeCoordinates[Math.floor(routeCoordinates.length / 2)];
+    const endPoint = routeCoordinates[routeCoordinates.length - 1];
+    
+    const [startWeather, middleWeather, endWeather] = await Promise.all([
+      getCurrentWeather(startPoint.latitude, startPoint.longitude),
+      getCurrentWeather(middlePoint.latitude, middlePoint.longitude),
+      getCurrentWeather(endPoint.latitude, endPoint.longitude)
+    ]);
+    
+    return {
+      success: true,
+      start: startWeather,
+      middle: middleWeather,
+      end: endWeather,
+      overallCondition: getMostSevereCondition([
+        startWeather.condition,
+        middleWeather.condition,
+        endWeather.condition
+      ])
+    };
+  } catch (error) {
+    console.error('Error getting route weather:', error);
+    return { 
+      success: false, 
+      error: error.message 
+    };
+  }
+};
+
+/**
+ * Helper: Determine most severe weather condition
+ */
+const getMostSevereCondition = (conditions) => {
+  const severity = {
+    'Thunderstorm': 5,
+    'Tornado': 5,
+    'Snow': 4,
+    'Rain': 3,
+    'Drizzle': 2,
+    'Clouds': 1,
+    'Clear': 0
+  };
+  
+  let mostSevere = 'Clear';
+  let highestSeverity = 0;
+  
+  conditions.forEach(condition => {
+    const level = severity[condition] || 0;
+    if (level > highestSeverity) {
+      highestSeverity = level;
+      mostSevere = condition;
+    }
+  });
+  
+  return mostSevere;
+};
+
+/**
+ * Get weather icon URL
+ */
+export const getWeatherIconUrl = (iconCode) => {
+  return `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+};
+
+/**
+ * Convert wind direction degrees to compass direction
+ */
+export const getWindDirection = (degrees) => {
+  const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+  const index = Math.round(degrees / 45) % 8;
+  return directions[index];
+};

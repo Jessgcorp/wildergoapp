@@ -1,0 +1,164 @@
+// ALTERNATIVE SIMPLER FIX: Just Clean Up Current Map Layout
+// ===========================================================
+
+// If the full redesign is too much, here's a minimal fix
+// that just reorganizes what you already have
+
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
+
+// SIMPLE CHANGES TO YOUR CURRENT MAP SCREEN:
+
+// 1. INCREASE MAP HEIGHT
+// In your current map component, change:
+// FROM: height: 200 or height: '30%'
+// TO:   height: height * 0.6  // 60% of screen
+
+// 2. REMOVE OVERLAPPING ELEMENTS
+// Move these BELOW the map instead of on top of it:
+// - Mode selector (Dating/Friends/Builder)
+// - Discover banner
+// - Look Ahead / Smart Route buttons
+
+// 3. KEEP ONLY ESSENTIAL OVERLAYS ON MAP
+// Only these should be ON TOP of the map:
+// - Weather badge (small, top-left corner)
+// - Expand button (top-right corner)
+// - Your location button (bottom-right)
+
+// QUICK STYLE FIXES:
+
+const quickFixStyles = StyleSheet.create({
+  // Make map bigger
+  mapContainer: {
+    height: '60%', // ✅ Was probably 30-40%, now 60%
+    width: '100%',
+  },
+
+  // Weather badge - small and unobtrusive
+  weatherOverlay: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: 8,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    // Remove any large text or multiple lines
+  },
+
+  // Expand button - top right
+  expandButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2C2C2C',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // MOVE THESE BELOW MAP (remove position: absolute)
+  controlsSection: {
+    padding: 16,
+    gap: 12,
+    backgroundColor: '#F5EFE6',
+    // No position: absolute!
+    // No top/left/right values!
+  },
+
+  // Mode selector should be compact
+  modeSelector: {
+    flexDirection: 'row',
+    height: 44, // ✅ Not 60+ pixels tall
+    // ... rest of styling
+  },
+
+  // Smart features should be side by side
+  smartFeatures: {
+    flexDirection: 'row',
+    gap: 12,
+    // Not stacked vertically!
+  },
+});
+
+// LAYOUT STRUCTURE:
+/*
+<View style={styles.screenContainer}>
+  
+  {/* MAP SECTION - 60% of screen *\/}
+  <View style={styles.mapContainer}>
+    <MapView style={styles.map} />
+    
+    {/* ONLY THESE ON TOP OF MAP: *\/}
+    <WeatherBadge style={styles.weatherOverlay} />
+    <ExpandButton style={styles.expandButton} />
+  </View>
+
+  {/* CONTROLS SECTION - BELOW MAP, NOT ON TOP *\/}
+  <ScrollView style={styles.controlsSection}>
+    <ModeSelector style={styles.modeSelector} />
+    <SmartFeatures style={styles.smartFeatures} />
+    <DiscoverBanner />
+  </ScrollView>
+
+</View>
+*/
+
+// KEY PRINCIPLES FOR QUICK FIX:
+// ===============================
+
+// ❌ DON'T DO THIS:
+// - Stack everything with position: absolute
+// - Put 5+ elements on top of map
+// - Make map only 30% of screen
+// - Use large overlays that cover map
+
+// ✅ DO THIS INSTEAD:
+// - Map is 60%+ of screen
+// - Only 2-3 small badges on map
+// - Put controls BELOW map
+// - Use flexDirection: 'row' for horizontal layout
+// - Add proper gaps between elements (12-16px)
+
+// SPECIFIC LINE CHANGES:
+// ======================
+
+// Find in your map.tsx or similar:
+
+// CHANGE 1: Map height
+// FROM: <View style={{ height: 200 }}>
+// TO:   <View style={{ height: height * 0.6 }}>
+
+// CHANGE 2: Remove position absolute from controls
+// FROM: <View style={{ position: 'absolute', top: 100, ... }}>
+// TO:   <View style={{ padding: 16, gap: 12 }}>
+
+// CHANGE 3: Make mode selector horizontal
+// FROM: <View style={{ flexDirection: 'column' }}>
+// TO:   <View style={{ flexDirection: 'row' }}>
+
+// CHANGE 4: Hide unnecessary overlays
+// FROM: <WeatherChangeAlert visible={true} />
+// TO:   <WeatherChangeAlert visible={showAlert} /> // Only when needed
+
+// VISUAL RESULT:
+/*
+┌──────────────────┐
+│                  │
+│                  │
+│   BIG MAP        │ <- 60% of screen
+│   [🌤️] [⛶]     │ <- Small badges only
+│                  │
+├──────────────────┤
+│ [♥️|👥|🔧]     │ <- Horizontal mode selector (below map)
+├──────────────────┤
+│ [👁️ Look|🗺️ Route] │ <- Horizontal features (below map)
+├──────────────────┤
+│ 🧭 Discover...   │ <- Banner (below map)
+└──────────────────┘
+*/

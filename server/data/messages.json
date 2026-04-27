@@ -1,0 +1,13 @@
+[
+  {
+    "id": "bc46050b-cac9-4ffd-a72c-cb260fdc065a",
+    "senderUid": "user1",
+    "receiverUid": "user2",
+    "content": "Hello from test",
+    "senderName": "User One",
+    "receiverName": "User Two",
+    "conversationId": "user1__user2",
+    "isRead": false,
+    "createdAt": "2026-04-02T05:40:43.385Z"
+  }
+]

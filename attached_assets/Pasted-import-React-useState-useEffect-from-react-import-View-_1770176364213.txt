@@ -1,0 +1,216 @@
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import Purchases from 'react-native-purchases';
+
+export default function PaywallScreen({ onComplete }) {
+  const [packages, setPackages] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    initializePurchases();
+  }, []);
+
+  const initializePurchases = async () => {
+    try {
+      // Initialize RevenueCat
+      await Purchases.configure({
+        apiKey: 'YOUR_REVENUECAT_API_KEY', // Get from RevenueCat dashboard
+      });
+
+      // Get available packages
+      const offerings = await Purchases.getOfferings();
+      if (offerings.current && offerings.current.availablePackages.length > 0) {
+        setPackages(offerings.current.availablePackages);
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error('Error initializing purchases:', error);
+      setLoading(false);
+    }
+  };
+
+  const purchasePremium = async () => {
+    try {
+      setLoading(true);
+      const purchaseResult = await Purchases.purchasePackage(packages[0]);
+      
+      if (purchaseResult.customerInfo.entitlements.active.premium) {
+        // User is now premium!
+        onComplete();
+      }
+    } catch (error) {
+      if (!error.userCancelled) {
+        console.error('Purchase error:', error);
+      }
+      setLoading(false);
+    }
+  };
+
+  const startFreeTrial = async () => {
+    // Same as purchase - RevenueCat handles free trial automatically
+    await purchasePremium();
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#C65D3B" />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <Text style={styles.title}>Unlock Premium Features</Text>
+      <Text style={styles.subtitle}>
+        Get the most out of WilderGo
+      </Text>
+
+      {/* Features */}
+      <View style={styles.featuresContainer}>
+        <Feature icon="✨" text="Advanced route planning" />
+        <Feature icon="🎯" text="Unlimited events per month" />
+        <Feature icon="⚡" text="Priority emergency response" />
+        <Feature icon="🔧" text="Video builder consultations" />
+        <Feature icon="📊" text="Detailed travel analytics" />
+      </View>
+
+      {/* Pricing */}
+      <View style={styles.pricingCard}>
+        <Text style={styles.price}>$4.99/month</Text>
+        <Text style={styles.trial}>7-day free trial</Text>
+        <Text style={styles.note}>Cancel anytime</Text>
+      </View>
+
+      {/* CTA Buttons */}
+      <TouchableOpacity 
+        style={styles.primaryButton} 
+        onPress={startFreeTrial}
+      >
+        <Text style={styles.primaryButtonText}>
+          Start Free Trial
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity 
+        style={styles.secondaryButton}
+        onPress={onComplete}
+      >
+        <Text style={styles.secondaryButtonText}>
+          Continue with Free
+        </Text>
+      </TouchableOpacity>
+
+      <Text style={styles.terms}>
+        Auto-renews at $4.99/month after trial. Cancel anytime.
+      </Text>
+    </View>
+  );
+}
+
+function Feature({ icon, text }) {
+  return (
+    <View style={styles.feature}>
+      <Text style={styles.featureIcon}>{icon}</Text>
+      <Text style={styles.featureText}>{text}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F5EFE6',
+    padding: 20,
+    justifyContent: 'center',
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#2A2A2A',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#4A5568',
+    textAlign: 'center',
+    marginBottom: 30,
+  },
+  featuresContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+  },
+  feature: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  featureIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  featureText: {
+    fontSize: 16,
+    color: '#2A2A2A',
+  },
+  pricingCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: '#C65D3B',
+  },
+  price: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#C65D3B',
+  },
+  trial: {
+    fontSize: 18,
+    color: '#2D5A3D',
+    fontWeight: '600',
+    marginTop: 5,
+  },
+  note: {
+    fontSize: 14,
+    color: '#4A5568',
+    marginTop: 5,
+  },
+  primaryButton: {
+    backgroundColor: '#C65D3B',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  primaryButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#E8C5A5',
+  },
+  secondaryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#4A5568',
+  },
+  terms: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    textAlign: 'center',
+    marginTop: 15,
+  },
+});

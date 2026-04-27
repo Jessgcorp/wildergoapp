@@ -1,0 +1,540 @@
+// SmartRouteScreen.js
+// Complete Smart Route UI with Map, Weather, and Road Risk
+
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  Dimensions
+} from 'react-native';
+import MapView, { Polyline, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { getSmartRoute } from './smartRouteService';
+
+const { width, height } = Dimensions.get('window');
+
+export default function SmartRouteScreen() {
+  const [smartRoute, setSmartRoute] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState('van');
+  const [mapRegion, setMapRegion] = useState({
+    latitude: 39.7392,
+    longitude: -104.9903,
+    latitudeDelta: 0.8,
+    longitudeDelta: 0.8,
+  });
+
+  // Sample route: Denver to Boulder
+  const origin = { latitude: 39.7392, longitude: -104.9903 };
+  const destination = { latitude: 40.0150, longitude: -105.2705 };
+
+  useEffect(() => {
+    loadSmartRoute();
+  }, []);
+
+  const loadSmartRoute = async () => {
+    setLoading(true);
+    try {
+      const route = await getSmartRoute(origin, destination);
+      if (route.success) {
+        setSmartRoute(route);
+        
+        // Center map on route
+        const midLat = (origin.latitude + destination.latitude) / 2;
+        const midLon = (origin.longitude + destination.longitude) / 2;
+        setMapRegion({
+          latitude: midLat,
+          longitude: midLon,
+          latitudeDelta: 0.8,
+          longitudeDelta: 0.8,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading Smart Route:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getRoadRiskColor = (level) => {
+    switch (level) {
+      case 'safe': return '#2D5A3D'; // Forest Green
+      case 'caution': return '#F2A154'; // Orange
+      case 'warning': return '#D94848'; // Red
+      default: return '#2D5A3D';
+    }
+  };
+
+  const getWeatherEmoji = (condition) => {
+    const emojiMap = {
+      'Clear': '☀️',
+      'Clouds': '☁️',
+      'Rain': '🌧️',
+      'Snow': '❄️',
+      'Thunderstorm': '⛈️',
+      'Drizzle': '🌦️',
+      'Mist': '🌫️',
+      'Fog': '🌫️',
+    };
+    return emojiMap[condition] || '🌤️';
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#C65D3B" />
+        <Text style={styles.loadingText}>Calculating Smart Route...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Smart Route</Text>
+        <Text style={styles.headerSubtitle}>AI-Powered Navigation</Text>
+      </View>
+
+      {/* Map */}
+      <MapView
+        provider={PROVIDER_GOOGLE}
+        style={styles.map}
+        region={mapRegion}
+        onRegionChangeComplete={setMapRegion}
+      >
+        {/* Route Polyline */}
+        {smartRoute && smartRoute.coordinates && (
+          <Polyline
+            coordinates={smartRoute.coordinates}
+            strokeColor="#C65D3B" // Burnt Sienna (brand color!)
+            strokeWidth={5}
+            lineDashPattern={[0]}
+          />
+        )}
+
+        {/* Start Marker with Weather */}
+        {smartRoute && (
+          <Marker
+            coordinate={origin}
+            title="Start: Denver"
+            description={`${smartRoute.weather.start.temperature}°F - ${smartRoute.weather.start.description}`}
+          >
+            <View style={styles.markerContainer}>
+              <View style={[styles.marker, styles.startMarker]}>
+                <Text style={styles.markerEmoji}>
+                  {getWeatherEmoji(smartRoute.weather.start.condition)}
+                </Text>
+                <Text style={styles.markerTemp}>
+                  {smartRoute.weather.start.temperature}°
+                </Text>
+              </View>
+              <View style={styles.markerArrow} />
+            </View>
+          </Marker>
+        )}
+
+        {/* Middle Marker with Weather */}
+        {smartRoute && smartRoute.coordinates && (
+          <Marker
+            coordinate={smartRoute.coordinates[Math.floor(smartRoute.coordinates.length / 2)]}
+            title="Midpoint"
+            description={`${smartRoute.weather.middle.temperature}°F - ${smartRoute.weather.middle.description}`}
+          >
+            <View style={styles.markerContainer}>
+              <View style={[styles.marker, styles.middleMarker]}>
+                <Text style={styles.markerEmoji}>
+                  {getWeatherEmoji(smartRoute.weather.middle.condition)}
+                </Text>
+                <Text style={styles.markerTemp}>
+                  {smartRoute.weather.middle.temperature}°
+                </Text>
+              </View>
+              <View style={styles.markerArrow} />
+            </View>
+          </Marker>
+        )}
+
+        {/* End Marker with Weather */}
+        {smartRoute && (
+          <Marker
+            coordinate={destination}
+            title="Destination: Boulder"
+            description={`${smartRoute.weather.end.temperature}°F - ${smartRoute.weather.end.description}`}
+          >
+            <View style={styles.markerContainer}>
+              <View style={[styles.marker, styles.endMarker]}>
+                <Text style={styles.markerEmoji}>
+                  {getWeatherEmoji(smartRoute.weather.end.condition)}
+                </Text>
+                <Text style={styles.markerTemp}>
+                  {smartRoute.weather.end.temperature}°
+                </Text>
+              </View>
+              <View style={styles.markerArrow} />
+            </View>
+          </Marker>
+        )}
+      </MapView>
+
+      {/* Bottom Info Card */}
+      {smartRoute && (
+        <View style={styles.infoCard}>
+          {/* Route Info */}
+          <View style={styles.routeInfo}>
+            <Text style={styles.distance}>{smartRoute.distance}</Text>
+            <Text style={styles.duration}>{smartRoute.duration}</Text>
+          </View>
+
+          {/* Road Risk Indicator */}
+          <View style={[
+            styles.roadRiskBadge,
+            { backgroundColor: getRoadRiskColor(smartRoute.safety.level) }
+          ]}>
+            <Text style={styles.roadRiskLabel}>ROAD RISK</Text>
+            <Text style={styles.roadRiskLevel}>
+              {smartRoute.safety.level.toUpperCase()}
+            </Text>
+            <Text style={styles.roadRiskScore}>
+              {smartRoute.safety.score}/100
+            </Text>
+          </View>
+
+          {/* Weather Summary */}
+          <View style={styles.weatherSummary}>
+            <Text style={styles.weatherTitle}>Weather Forecast</Text>
+            <View style={styles.weatherRow}>
+              <View style={styles.weatherPoint}>
+                <Text style={styles.weatherEmoji}>
+                  {getWeatherEmoji(smartRoute.weather.start.condition)}
+                </Text>
+                <Text style={styles.weatherTemp}>
+                  {smartRoute.weather.start.temperature}°F
+                </Text>
+                <Text style={styles.weatherLabel}>Start</Text>
+              </View>
+              <View style={styles.weatherPoint}>
+                <Text style={styles.weatherEmoji}>
+                  {getWeatherEmoji(smartRoute.weather.middle.condition)}
+                </Text>
+                <Text style={styles.weatherTemp}>
+                  {smartRoute.weather.middle.temperature}°F
+                </Text>
+                <Text style={styles.weatherLabel}>Middle</Text>
+              </View>
+              <View style={styles.weatherPoint}>
+                <Text style={styles.weatherEmoji}>
+                  {getWeatherEmoji(smartRoute.weather.end.condition)}
+                </Text>
+                <Text style={styles.weatherTemp}>
+                  {smartRoute.weather.end.temperature}°F
+                </Text>
+                <Text style={styles.weatherLabel}>End</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Warnings */}
+          {smartRoute.safety.warnings.length > 0 && (
+            <View style={styles.warningsContainer}>
+              <Text style={styles.warningsTitle}>⚠️ Warnings</Text>
+              {smartRoute.safety.warnings.map((warning, index) => (
+                <Text key={index} style={styles.warningText}>
+                  • {warning}
+                </Text>
+              ))}
+            </View>
+          )}
+
+          {/* Recommendations */}
+          {smartRoute.safety.recommendations.length > 0 && (
+            <View style={styles.recommendationsContainer}>
+              <Text style={styles.recommendationsTitle}>💡 Recommendations</Text>
+              {smartRoute.safety.recommendations.slice(0, 2).map((rec, index) => (
+                <Text key={index} style={styles.recommendationText}>
+                  • {rec}
+                </Text>
+              ))}
+            </View>
+          )}
+
+          {/* AI Badge */}
+          <View style={styles.aiBadge}>
+            <Text style={styles.aiBadgeText}>🤖 AI Optimized</Text>
+          </View>
+
+          {/* Start Navigation Button */}
+          <TouchableOpacity style={styles.startButton}>
+            <Text style={styles.startButtonText}>Start Navigation</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Refresh Button */}
+      <TouchableOpacity
+        style={styles.refreshButton}
+        onPress={loadSmartRoute}
+      >
+        <Text style={styles.refreshButtonText}>🔄 Refresh Route</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F5EFE6',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5EFE6',
+  },
+  loadingText: {
+    marginTop: 15,
+    fontSize: 16,
+    color: '#4A5568',
+    fontWeight: '600',
+  },
+  header: {
+    backgroundColor: '#FFFFFF',
+    paddingTop: 50,
+    paddingBottom: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8C5A5',
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#2A2A2A',
+    marginBottom: 5,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#C65D3B',
+    fontWeight: '600',
+  },
+  map: {
+    height: height * 0.4,
+    width: '100%',
+  },
+  markerContainer: {
+    alignItems: 'center',
+  },
+  marker: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 8,
+    borderWidth: 3,
+    alignItems: 'center',
+    minWidth: 70,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  startMarker: {
+    borderColor: '#2D5A3D', // Forest Green
+  },
+  middleMarker: {
+    borderColor: '#4A90E2', // Friend Mode Blue
+  },
+  endMarker: {
+    borderColor: '#C65D3B', // Burnt Sienna
+  },
+  markerEmoji: {
+    fontSize: 24,
+    marginBottom: 2,
+  },
+  markerTemp: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#2A2A2A',
+  },
+  markerArrow: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#FFFFFF',
+    marginTop: -1,
+  },
+  infoCard: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    marginTop: -20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 10,
+  },
+  routeInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8C5A5',
+  },
+  distance: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#2A2A2A',
+  },
+  duration: {
+    fontSize: 20,
+    color: '#4A5568',
+    fontWeight: '600',
+  },
+  roadRiskBadge: {
+    borderRadius: 12,
+    padding: 15,
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  roadRiskLabel: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    letterSpacing: 1,
+    marginBottom: 5,
+  },
+  roadRiskLevel: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 3,
+  },
+  roadRiskScore: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  weatherSummary: {
+    marginBottom: 15,
+  },
+  weatherTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2A2A2A',
+    marginBottom: 10,
+  },
+  weatherRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  weatherPoint: {
+    alignItems: 'center',
+  },
+  weatherEmoji: {
+    fontSize: 32,
+    marginBottom: 5,
+  },
+  weatherTemp: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2A2A2A',
+    marginBottom: 3,
+  },
+  weatherLabel: {
+    fontSize: 12,
+    color: '#4A5568',
+  },
+  warningsContainer: {
+    backgroundColor: '#FFF3CD',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: '#F2A154',
+  },
+  warningsTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#856404',
+    marginBottom: 5,
+  },
+  warningText: {
+    fontSize: 13,
+    color: '#856404',
+    marginBottom: 3,
+  },
+  recommendationsContainer: {
+    backgroundColor: '#D1ECF1',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 15,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4A90E2',
+  },
+  recommendationsTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#0C5460',
+    marginBottom: 5,
+  },
+  recommendationText: {
+    fontSize: 13,
+    color: '#0C5460',
+    marginBottom: 3,
+  },
+  aiBadge: {
+    backgroundColor: '#E8C5A5',
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    alignSelf: 'flex-start',
+    marginBottom: 15,
+  },
+  aiBadgeText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#2A2A2A',
+  },
+  startButton: {
+    backgroundColor: '#C65D3B',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  startButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  refreshButton: {
+    position: 'absolute',
+    top: 120,
+    right: 15,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 25,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  refreshButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#C65D3B',
+  },
+});

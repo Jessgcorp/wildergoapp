@@ -1,0 +1,25 @@
+{
+  "cli": {
+    "version": ">= 18.0.0",
+    "appVersionSource": "local",
+    "promptToConfigurePushNotifications": false
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://aa60d38e-336a-4c6c-8c7a-2e8f4ae13a3f-00-37dgmtff0mvif.picard.replit.dev"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

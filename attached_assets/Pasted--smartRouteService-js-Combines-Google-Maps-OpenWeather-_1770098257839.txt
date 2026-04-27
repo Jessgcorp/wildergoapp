@@ -1,0 +1,198 @@
+// smartRouteService.js
+// Combines Google Maps + OpenWeather for Smart Route
+
+import { getRoute, decodePolyline } from './mapService';
+import { getRouteWeather, getCurrentWeather } from './weatherService';
+
+/**
+ * MAIN SMART ROUTE FUNCTION
+ * This is what makes WilderGo unique!
+ */
+export const getSmartRoute = async (origin, destination) => {
+  try {
+    console.log('🗺️ Getting Smart Route...');
+    
+    // 1. Get route from Google Maps
+    console.log('📍 Fetching route...');
+    const routeData = await getRoute(origin, destination);
+    
+    if (!routeData.success) {
+      return { 
+        success: false, 
+        error: 'Could not calculate route: ' + routeData.error 
+      };
+    }
+    
+    // 2. Decode polyline to get coordinates along route
+    console.log('🔄 Decoding route coordinates...');
+    const routeCoordinates = decodePolyline(routeData.polyline);
+    
+    // 3. Get weather along the route
+    console.log('🌤️ Fetching weather data...');
+    const weatherData = await getRouteWeather(routeCoordinates);
+    
+    if (!weatherData.success) {
+      return { 
+        success: false, 
+        error: 'Could not get weather: ' + weatherData.error 
+      };
+    }
+    
+    // 4. Analyze route safety
+    const safety = analyzeRouteSafety(weatherData);
+    
+    // 5. Combine everything into Smart Route
+    const smartRoute = {
+      success: true,
+      
+      // Route info
+      distance: routeData.distance,
+      duration: routeData.duration,
+      startAddress: routeData.startAddress,
+      endAddress: routeData.endAddress,
+      
+      // Route coordinates (for map display)
+      coordinates: routeCoordinates,
+      polyline: routeData.polyline,
+      
+      // Turn-by-turn directions
+      steps: routeData.steps,
+      
+      // Weather data
+      weather: {
+        start: weatherData.start,
+        middle: weatherData.middle,
+        end: weatherData.end,
+        overall: weatherData.overallCondition
+      },
+      
+      // Safety analysis
+      safety: safety,
+      
+      // Metadata
+      generatedAt: new Date().toISOString(),
+      aiOptimized: true
+    };
+    
+    console.log('✅ Smart Route generated successfully!');
+    return smartRoute;
+    
+  } catch (error) {
+    console.error('❌ Smart Route error:', error);
+    return { 
+      success: false, 
+      error: error.message 
+    };
+  }
+};
+
+/**
+ * Analyze route safety based on weather
+ */
+const analyzeRouteSafety = (weatherData) => {
+  const { start, middle, end, overallCondition } = weatherData;
+  
+  let safetyLevel = 'safe'; // 'safe', 'caution', 'warning'
+  let warnings = [];
+  let recommendations = [];
+  
+  // Check for severe weather
+  if (overallCondition === 'Thunderstorm' || overallCondition === 'Tornado') {
+    safetyLevel = 'warning';
+    warnings.push('Severe weather along route');
+    recommendations.push('Consider delaying trip');
+  } else if (overallCondition === 'Snow') {
+    safetyLevel = 'caution';
+    warnings.push('Snowy conditions expected');
+    recommendations.push('Check road conditions before departing');
+    recommendations.push('Ensure vehicle is winter-ready');
+  } else if (overallCondition === 'Rain') {
+    safetyLevel = 'caution';
+    warnings.push('Rainy conditions along route');
+    recommendations.push('Drive carefully on wet roads');
+  }
+  
+  // Check wind speeds
+  const winds = [start.windSpeed, middle.windSpeed, end.windSpeed];
+  const maxWind = Math.max(...winds);
+  if (maxWind > 25) {
+    safetyLevel = safetyLevel === 'safe' ? 'caution' : safetyLevel;
+    warnings.push(`High winds up to ${maxWind} mph`);
+    recommendations.push('Secure loose items on vehicle');
+  }
+  
+  // Check temperature extremes
+  const temps = [start.temperature, middle.temperature, end.temperature];
+  const minTemp = Math.min(...temps);
+  const maxTemp = Math.max(...temps);
+  
+  if (minTemp < 32) {
+    warnings.push('Freezing temperatures possible');
+    recommendations.push('Watch for ice on roads');
+  }
+  
+  if (maxTemp > 95) {
+    warnings.push('High temperatures expected');
+    recommendations.push('Stay hydrated, check engine cooling');
+  }
+  
+  // If no warnings, add positive message
+  if (warnings.length === 0) {
+    recommendations.push('Weather conditions are favorable for travel');
+  }
+  
+  return {
+    level: safetyLevel,
+    warnings: warnings,
+    recommendations: recommendations,
+    score: safetyLevel === 'safe' ? 100 : safetyLevel === 'caution' ? 70 : 40
+  };
+};
+
+/**
+ * Get Smart Route and save to Firebase
+ */
+export const createSmartRouteForEvent = async (eventId, origin, destination) => {
+  try {
+    // Get Smart Route
+    const smartRoute = await getSmartRoute(origin, destination);
+    
+    if (!smartRoute.success) {
+      return smartRoute;
+    }
+    
+    // TODO: Save to Firebase
+    // import { db } from './firebaseConfig';
+    // import { doc, updateDoc } from 'firebase/firestore';
+    // await updateDoc(doc(db, 'events', eventId), {
+    //   smartRoute: smartRoute
+    // });
+    
+    return smartRoute;
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Format Smart Route for display
+ */
+export const formatSmartRouteDisplay = (smartRoute) => {
+  if (!smartRoute || !smartRoute.success) {
+    return null;
+  }
+  
+  return {
+    title: `${smartRoute.distance} • ${smartRoute.duration}`,
+    subtitle: smartRoute.weather.overall,
+    safetyColor: 
+      smartRoute.safety.level === 'safe' ? '#2D5A3D' : // Green
+      smartRoute.safety.level === 'caution' ? '#F2A154' : // Orange
+      '#D94848', // Red
+    safetyText: smartRoute.safety.level.toUpperCase(),
+    weatherIcon: smartRoute.weather.start.icon,
+    temperature: `${smartRoute.weather.start.temperature}°F`,
+    warnings: smartRoute.safety.warnings,
+    recommendations: smartRoute.safety.recommendations
+  };
+};

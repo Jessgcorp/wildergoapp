@@ -1,0 +1,15 @@
+[1G[0K⠙[1G[0K
+> my-app@1.0.0 server:dev
+> NODE_ENV=development tsx server/index.ts
+
+[1G[0K⠙[1G[0K[FIREBASE] === Initializing Firebase Admin SDK ===
+[FIREBASE] FIREBASE_SERVICE_ACCOUNT found (length: 2336 chars)
+[FIREBASE] Service account parsed successfully
+[FIREBASE]   project_id: wildergo-27042
+[FIREBASE]   client_email: firebase-adminsdk-fbsvc@wildergo-27042.iam.gserviceaccount.com
+[FIREBASE] Firebase Admin SDK initialized successfully for project: wildergo-27042
+[FIREBASE] FIREBASE_WEB_API_KEY is set (length: 39 chars)
+[SERVER] Firebase initialized on startup
+Serving static Expo files with dynamic manifest routing
+Expo routing: Checking expo-platform header on / and /manifest
+express server serving on port 5000

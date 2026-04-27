@@ -1,0 +1,258 @@
+// TestSmartRoute.js
+// Test screen to verify Smart Route is working
+
+import React, { useState } from 'react';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  ScrollView, 
+  StyleSheet,
+  ActivityIndicator 
+} from 'react-native';
+import { getSmartRoute, formatSmartRouteDisplay } from './smartRouteService';
+
+export default function TestSmartRoute() {
+  const [origin, setOrigin] = useState('Denver, CO');
+  const [destination, setDestination] = useState('Boulder, CO');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+  
+  const testSmartRoute = async () => {
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    
+    try {
+      // For testing, use sample coordinates
+      // In real app, you'd geocode the addresses first
+      const originCoords = {
+        latitude: 39.7392,
+        longitude: -104.9903
+      };
+      
+      const destCoords = {
+        latitude: 40.0150,
+        longitude: -105.2705
+      };
+      
+      const smartRoute = await getSmartRoute(originCoords, destCoords);
+      
+      if (smartRoute.success) {
+        setResult(smartRoute);
+      } else {
+        setError(smartRoute.error);
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  return (
+    <ScrollView style={styles.container}>
+      <Text style={styles.title}>🗺️ Smart Route Test</Text>
+      
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>Origin:</Text>
+        <TextInput
+          style={styles.input}
+          value={origin}
+          onChangeText={setOrigin}
+          placeholder="Enter origin"
+        />
+      </View>
+      
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>Destination:</Text>
+        <TextInput
+          style={styles.input}
+          value={destination}
+          onChangeText={setDestination}
+          placeholder="Enter destination"
+        />
+      </View>
+      
+      <TouchableOpacity 
+        style={styles.button} 
+        onPress={testSmartRoute}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>Get Smart Route</Text>
+        )}
+      </TouchableOpacity>
+      
+      {error && (
+        <View style={styles.errorBox}>
+          <Text style={styles.errorText}>❌ Error: {error}</Text>
+        </View>
+      )}
+      
+      {result && (
+        <View style={styles.resultBox}>
+          <Text style={styles.resultTitle}>✅ Smart Route Generated!</Text>
+          
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>📍 Route Info</Text>
+            <Text style={styles.text}>Distance: {result.distance}</Text>
+            <Text style={styles.text}>Duration: {result.duration}</Text>
+            <Text style={styles.text}>From: {result.startAddress}</Text>
+            <Text style={styles.text}>To: {result.endAddress}</Text>
+          </View>
+          
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🌤️ Weather</Text>
+            <Text style={styles.text}>
+              Start: {result.weather.start.temperature}°F - {result.weather.start.description}
+            </Text>
+            <Text style={styles.text}>
+              Middle: {result.weather.middle.temperature}°F - {result.weather.middle.description}
+            </Text>
+            <Text style={styles.text}>
+              End: {result.weather.end.temperature}°F - {result.weather.end.description}
+            </Text>
+            <Text style={styles.text}>
+              Overall: {result.weather.overall}
+            </Text>
+          </View>
+          
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              🛡️ Safety: {result.safety.level.toUpperCase()}
+            </Text>
+            <Text style={styles.text}>Score: {result.safety.score}/100</Text>
+            
+            {result.safety.warnings.length > 0 && (
+              <>
+                <Text style={styles.subTitle}>⚠️ Warnings:</Text>
+                {result.safety.warnings.map((warning, i) => (
+                  <Text key={i} style={styles.text}>• {warning}</Text>
+                ))}
+              </>
+            )}
+            
+            {result.safety.recommendations.length > 0 && (
+              <>
+                <Text style={styles.subTitle}>💡 Recommendations:</Text>
+                {result.safety.recommendations.map((rec, i) => (
+                  <Text key={i} style={styles.text}>• {rec}</Text>
+                ))}
+              </>
+            )}
+          </View>
+          
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🤖 AI Status</Text>
+            <Text style={styles.text}>
+              {result.aiOptimized ? '✅ AI Optimized' : '❌ Not optimized'}
+            </Text>
+            <Text style={styles.text}>
+              Generated: {new Date(result.generatedAt).toLocaleString()}
+            </Text>
+            <Text style={styles.text}>
+              Route points: {result.coordinates.length}
+            </Text>
+          </View>
+        </View>
+      )}
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#F5EFE6',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+    color: '#2A2A2A',
+  },
+  inputContainer: {
+    marginBottom: 15,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 5,
+    color: '#2A2A2A',
+  },
+  input: {
+    backgroundColor: '#FFFFFF',
+    padding: 15,
+    borderRadius: 8,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#E8C5A5',
+  },
+  button: {
+    backgroundColor: '#C65D3B',
+    padding: 18,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  errorBox: {
+    backgroundColor: '#FFE5E5',
+    padding: 15,
+    borderRadius: 8,
+    marginTop: 15,
+    borderWidth: 1,
+    borderColor: '#FF0000',
+  },
+  errorText: {
+    color: '#D94848',
+    fontSize: 14,
+  },
+  resultBox: {
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    borderRadius: 8,
+    marginTop: 15,
+  },
+  resultTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    color: '#2D5A3D',
+  },
+  section: {
+    marginBottom: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8C5A5',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#C65D3B',
+  },
+  subTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 10,
+    marginBottom: 5,
+    color: '#2A2A2A',
+  },
+  text: {
+    fontSize: 14,
+    marginBottom: 5,
+    color: '#4A5568',
+  },
+});

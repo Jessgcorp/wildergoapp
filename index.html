@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WilderGo Build 17</title>
+    <style>
+        /* 1. THE FOUNDATION: A deep, organic background so the glass can "work" */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0f172a; /* Deep Navy fallback */
+            background: radial-gradient(circle at top left, #1e293b, #0f172a), 
+                        url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+        }
+
+        /* 2. THE GLASS PILL: Pure Build 17 Logic */
+        .glass-pill-container {
+            /* The Core Glass Effect */
+            background: rgba(255, 255, 255, 0.15); 
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+
+            /* The Light-Catching Edge */
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 999px;
+
+            /* Layout */
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+
+            /* Depth */
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .glass-pill-container:hover {
+            transform: scale(1.02);
+        }
+
+        /* 3. THE CIRCLES (Build # and Status) */
+        .glass-circle {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .white-circle {
+            background: white;
+            color: #0f172a;
+            position: relative;
+        }
+
+        /* 4. THE CENTER INTERACTION AREA */
+        .inner-nav {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 999px;
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            font-weight: 500;
+            letter-spacing: -0.3px;
+        }
+
+        .nav-icon {
+            width: 18px;
+            height: 18px;
+            fill: white;
+        }
+
+        /* 5. THE NOTIFICATION DOT */
+        .badge {
+            width: 10px;
+            height: 10px;
+            background: #ff3b30; /* Apple Red */
+            border: 2px solid white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            right: 2px;
+        }
+
+        .status-text {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1;
+        }
+
+        .label {
+            font-size: 8px;
+            text-transform: uppercase;
+            margin-top: 2px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glass-pill-container">
+        <div class="glass-circle">17</div>
+
+        <div class="inner-nav">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
+            <span>Convoy Route</span>
+        </div>
+
+        <div class="glass-circle white-circle">
+            <div class="status-text">
+                <span>3</span>
+                <span class="label">Nearby</span>
+            </div>
+            <div class="badge"></div>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,33 @@
+// FIX FOR: weatherAIService.ts Line 200
+// ERROR: "AI generation not available - using fallback"
+
+// This is actually just a warning, not a breaking error. 
+// It means the weather AI service is working, but using fallback data instead of real AI.
+
+// OPTION 1: Suppress the error (if you're okay with fallback data)
+// In weatherAIService.ts line 200, change:
+console.error('Error generating quick summary: ...', error);
+
+// TO:
+console.log('Using fallback weather summary:', error);  // Less alarming
+
+// OPTION 2: Fix the AI integration (if you want real AI summaries)
+// The service is trying to call an AI endpoint that doesn't exist.
+// You need to either:
+// 1. Set up a weather AI API key
+// 2. Use a different weather service
+// 3. Keep using the fallback (which is working fine)
+
+// RECOMMENDED: Just change the console.error to console.log
+// The fallback is working correctly, this is just a noisy warning.
+
+// In weatherAIService.ts around line 200:
+} catch (error) {
+  console.log('Error generating quick summary:', error);  // Changed from console.error
+  
+  // Fallback summary (this part is working fine)
+  if (weather.windSpeed > 20) {
+    return 'Windy conditions ahead—secure your awning';
+  }
+  // ... rest of fallback code
+}

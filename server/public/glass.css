@@ -1,0 +1,46 @@
+/* BUILD 17 — FORCE GLASS VISIBILITY */
+
+/* Dark background so white glass is clearly visible */
+body {
+  background: #0f172a !important;
+  background-image:
+    radial-gradient(at 0% 0%, rgba(30, 58, 138, 0.5) 0, transparent 50%),
+    radial-gradient(at 50% 0%, rgba(139, 92, 246, 0.5) 0, transparent 50%) !important;
+  min-height: 100vh !important;
+  margin: 0 !important;
+}
+
+/* Crystal Clear floating pill */
+.glass-pill-container {
+  /* Fallback for older engines */
+  background: rgba(255, 255, 255, 0.25);
+
+  /* Live glass properties */
+  background: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(30px) saturate(200%) brightness(1.1) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(200%) brightness(1.1) !important;
+
+  /* Light-catching edge */
+  border: 1.5px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 999px !important;
+
+  /* Layout */
+  padding: 12px 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 15px !important;
+
+  /* VisionOS floating position */
+  position: fixed !important;
+  bottom: 30px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 92% !important;
+  max-width: 600px !important;
+  z-index: 99999 !important;
+
+  /* Deep shadow for lift */
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3) !important;
+  background-clip: padding-box !important;
+}

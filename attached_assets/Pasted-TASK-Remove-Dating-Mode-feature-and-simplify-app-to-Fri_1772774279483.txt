@@ -1,0 +1,50 @@
+TASK: Remove Dating Mode feature and simplify app to Friends Mode only
+
+CONTEXT:
+WilderGo currently has separate "Dating Mode" and "Friends Mode" features. We're removing the dedicated Dating Mode to simplify the app and make it feel more like a community platform rather than a dating app. Users can still connect and potentially date through Friends Mode - connections happen organically.
+
+CHANGES NEEDED:
+
+1. REMOVE DATING MODE COMPLETELY:
+   - Remove Dating Mode tab/section from main navigation
+   - Remove any Dating Mode specific screens/components
+   - Remove dating mode toggle from settings
+   - Remove dating mode opt-in during account creation
+   - Remove any dating-specific filters or UI elements
+
+2. UPDATE FRIENDS MODE:
+   - Friends Mode becomes the primary (and only) social connection feature
+   - Keep all Friends Mode functionality (events, meetups, campfires, hiking, van meetups)
+   - Ensure users can view other nomad profiles through Friends Mode
+   - Keep messaging/chat functionality for connecting with other users
+
+3. UPDATE ONBOARDING:
+   - Remove the dating opt-in question from account creation flow
+   - Simplify onboarding to focus on Friends Mode and community connection
+
+4. UPDATE UI/NAVIGATION:
+   - If there were separate tabs for "Dating" and "Friends", remove Dating tab
+   - Update any navigation that referenced both modes
+   - Clean up any conditional rendering based on dating mode preference
+
+5. DATABASE/BACKEND (if applicable):
+   - Remove isDatingModeEnabled or similar flags from user profiles
+   - Keep all user connection/messaging infrastructure intact
+   - No need to migrate existing connections - they all become "friend" connections
+
+6. UPDATE COPY/TEXT:
+   - Change "Find friends or co-pilots" to "Find your road family"
+   - Update any UI text that mentions "dating mode"
+   - Keep messaging about connection and community
+
+WHAT TO KEEP:
+- All Friends Mode features (events, map pins, meetups)
+- User profiles and profile viewing
+- Messaging/chat between users
+- Community features
+- All event types (campfire, van meetup, hiking, etc.)
+
+GOAL:
+Simplify the app to feel like a community platform where authentic connections happen naturally, not a dating app with separate modes.
+
+Please implement these changes and confirm when complete.
