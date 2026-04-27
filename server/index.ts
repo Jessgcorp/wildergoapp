@@ -174,13 +174,11 @@ function serveLandingPage({
 }
 
 function configureExpoAndLanding(app: express.Application) {
-  const templatePath = path.resolve(
-    process.cwd(),
-    "server",
-    "templates",
-    "landing-page.html",
-  );
-  const landingPageTemplate = fs.readFileSync(templatePath, "utf-8");
+ const templatePath = path.resolve(
+  process.cwd(),
+  "templates",
+  "landing-page.html",
+);
   const appName = getAppName();
 
   log("Serving static Expo files with dynamic manifest routing");
