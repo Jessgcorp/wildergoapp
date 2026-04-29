@@ -209,10 +209,15 @@ function configureExpoAndLanding(app: express.Application) {
     next();
   });
 
-  app.use("/assets", express.static(path.resolve(process.cwd(), "assets")));
-  app.use(express.static(path.resolve(process.cwd(), "static-build")));
-  app.use(express.static(path.resolve(process.cwd(), "templates")));
-  app.use(express.static(path.resolve(process.cwd(), "server", "public")));
+  app.use("/assets", express.static(path.join(__dirname, "../assets")));
+  app.use(express.static(path.join(__dirname, "../static-build")));
+  app.use(express.static(path.join(__dirname, "../templates")));
+  app.use(express.static(path.join(__dirname, "./public")));
+
+  // Catch-all route to serve landing page
+  app.get("*", (req: Request, res: Response) => {
+    res.sendFile(path.resolve(__dirname, "../templates/landing-page.html"));
+  });
 
   log("Expo routing: Checking expo-platform header on / and /manifest");
 }
