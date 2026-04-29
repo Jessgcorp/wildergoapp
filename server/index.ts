@@ -272,16 +272,16 @@ function setupErrorHandler(app: express.Application) {
   configureExpoAndLanding(app);
 
   // 1. Tell the server where the styles and images are
-  app.use(express.static(path.join(process.cwd(), "..", "templates")));
+  app.use(express.static(path.join(__dirname, "..", "templates")));
 
   // 2. The main entry point
   app.get("/", (_req: Request, res: Response) => {
-    res.sendFile(path.join(process.cwd(), "..", "templates", "landing-page.html"));
+    res.sendFile(path.join(__dirname, "..", "templates", "landing-page.html"));
   });
 
   // 3. The "Insurance Policy" - send any unknown URL to the landing page
   app.get("*", (_req: Request, res: Response) => {
-    res.sendFile(path.join(process.cwd(), "..", "templates", "landing-page.html"));
+    res.sendFile(path.join(__dirname, "..", "templates", "landing-page.html"));
   });
 
   const server = createServer(app);
