@@ -216,7 +216,7 @@ function configureExpoAndLanding(app: express.Application) {
 
   // Catch-all route to serve landing page
   app.get("*", (req: Request, res: Response) => {
-    res.sendFile(path.resolve(__dirname, "../templates/landing-page.html"));
+    res.sendFile(path.join(__dirname, "../templates/landing-page.html"));
   });
 
   log("Expo routing: Checking expo-platform header on / and /manifest");
@@ -266,7 +266,7 @@ function setupErrorHandler(app: express.Application) {
   app.use("/api/auth", authRoutes);
 
   app.get("/", (_req: Request, res: Response) => {
-    res.send("SERVER LIVE - VERSION 2.0");
+    res.sendFile(path.join(__dirname, "../templates/landing-page.html"));
   });
 
   configureExpoAndLanding(app);
