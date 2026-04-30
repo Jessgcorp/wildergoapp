@@ -1,17 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "strict": true,
+    "module": "commonjs",
     "outDir": "./dist",
+    "strict": false,
     "skipLibCheck": true,
-    "noImplicitAny": false,
-    "paths": {
-      "@shared/*": ["../shared/*"]
-    }
+    "esModuleInterop": true
   },
-  "include": ["**/*"],
-  "exclude": ["node_modules"]
+  "include": ["**/*.ts"]
 }
